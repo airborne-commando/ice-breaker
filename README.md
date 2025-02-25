@@ -8,7 +8,7 @@ In order to generate names you'll need to download a name list [here](https://gi
 
 to run the name gen do:
 
-    python namegen.py
+    python nmgn.py
 
 and input the file size.
 
