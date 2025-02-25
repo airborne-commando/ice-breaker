@@ -338,7 +338,7 @@ Here’s a detailed discussion of the **changes made so far** to the script, inc
 
 ### 21. **OS**:
   - **Windows**:
-    - Created a windows executable
+    - Created a windows executables for both
 
 ---
 
