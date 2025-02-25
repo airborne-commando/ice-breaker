@@ -13,6 +13,20 @@ to run the name gen do:
 and input the file size.
 
 
+---
+
+### Summary of Key Features:
+- **Flexible Search**: Supports optional arguments, interactive prompts, and search terms from a file.
+- **Caching**: Implements a TTL-based caching mechanism with automatic deletion of expired cache.
+- **Animation**: Displays a binary-style animation during the search.
+- **Error Handling**: Handles invalid inputs, directory errors, and file reading errors.
+- **Parallel Processing**: Uses threading for faster searches.
+- **User-Friendly**: Provides clear prompts, human-readable outputs, and a help command.
+- **Windows**: Created both scripts as windows executables.
+
+---
+
+
 Here’s a detailed discussion of the **changes made so far** to the script, including the new features and improvements:
 
 ---
@@ -339,15 +353,3 @@ Here’s a detailed discussion of the **changes made so far** to the script, inc
 ### 21. **OS**:
   - **Windows**:
     - Created a windows executables for both
-
----
-
-### Summary of Key Features:
-- **Flexible Search**: Supports optional arguments, interactive prompts, and search terms from a file.
-- **Caching**: Implements a TTL-based caching mechanism with automatic deletion of expired cache.
-- **Animation**: Displays a binary-style animation during the search.
-- **Error Handling**: Handles invalid inputs, directory errors, and file reading errors.
-- **Parallel Processing**: Uses threading for faster searches.
-- **User-Friendly**: Provides clear prompts, human-readable outputs, and a help command.
-
----
