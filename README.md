@@ -26,6 +26,12 @@ and input the file size.
 
 ---
 
+How to run under windows in the exeutable:
+
+open cmd and type for example:
+
+    ./icebrkr.exe
+
 
 Here’s a detailed discussion of the **changes made so far** to the script, including the new features and improvements:
 
