@@ -338,6 +338,10 @@ Here’s a detailed discussion of the **changes made so far** to the script, inc
 
 ---
 
+### 21. A Windows Executable
+
+Added in a windows executable so python wouldn't need to be installed for windows users.
+
 ### Summary of Key Features:
 - **Flexible Search**: Supports optional arguments, interactive prompts, and search terms from a file.
 - **Caching**: Implements a TTL-based caching mechanism with automatic deletion of expired cache.
