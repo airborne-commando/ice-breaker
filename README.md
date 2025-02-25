@@ -4,8 +4,6 @@ Ice breaker is a tool designed to scan databases (leaked or simulated) with eith
 
 Name is based on the trait from [Deus Ex: GOTY](https://deusex.fandom.com/wiki/Computer_skill#Effects), was/is a fun little project :)
 
-In order to generate names you'll need to download a name list [here](https://gist.githubusercontent.com/elifiner/cc90fdd387449158829515782936a9a4/raw/fea1da1a3c4ce5c8e470f679a8e1bc741281a609/first-names.txt) and save as first-names.txt only or grab my [fork of that](https://gist.githubusercontent.com/airborne-commando/aa284cb7145b3c7c74881b39d4a679bc/raw/fea1da1a3c4ce5c8e470f679a8e1bc741281a609/first-names.txt) if missing.
-
 to run the name gen do:
 
     python nmgn.py
