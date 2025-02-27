@@ -21,6 +21,7 @@ and input the file size.
 - **Parallel Processing**: Uses threading for faster searches.
 - **User-Friendly**: Provides clear prompts, human-readable outputs, and a help command.
 - **Windows**: Created both scripts as windows executables.
+- **Results and such**: Will be saved to \Users\<username>\icebrkr_data and for linux home/<username>/icebrkr_data
 
 ---
 
