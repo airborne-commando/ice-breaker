@@ -155,7 +155,6 @@ def parse_tlds(tld_input):
 # Main script
 if __name__ == "__main__":
     # Set up signal handler for Ctrl+C
-    import signal
     signal.signal(signal.SIGINT, cleanup)
 
     # Check if no arguments are provided (only the script name is present)
@@ -236,25 +235,19 @@ if __name__ == "__main__":
     if tlds:
         search_terms.extend(tlds)
 
-    # Get the directory where the script is located
-    script_dir = Path(__file__).parent
+    # Use a fixed directory instead of the PyInstaller temp directory
+    persistent_dir = Path.home() / "icebrkr_data"
+    text_dir = persistent_dir / "text"
+    cache_dir = persistent_dir / "cache"
+    index_dir = persistent_dir / "index"
 
-    # Create necessary directories in the script's directory if they don't exist
-    text_dir = script_dir / "text"
-    cache_dir = script_dir / "cache"
-    index_dir = script_dir / "index"
-    text_dir.mkdir(exist_ok=True)
-    cache_dir.mkdir(exist_ok=True)
-    index_dir.mkdir(exist_ok=True)
+    # Ensure directories exist
+    text_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    index_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ask the user for the output file name
-    filename = input("Enter the filename for the text file (default: output.txt): ").strip()
-    if not filename:
-        filename = "output.txt"
-    elif not filename.endswith(".txt"):
-        filename += ".txt"
-
-    output_path = text_dir / filename
+    # Output file paths
+    output_path = text_dir / "output.txt"
     index_file = index_dir / "index.txt"
 
     # Generate cache key based on search terms
