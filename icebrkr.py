@@ -7,11 +7,19 @@ import concurrent.futures
 from pathlib import Path
 import threading
 import random
+import signal
 
 # Function to clean up and exit
 def cleanup(signum, frame):
     print("\nInterrupt received, stopping all processes...")
-    if output_path.exists():
+    # Signal to stop the animation
+    if 'stop_event' in globals():
+        stop_event.set()  # Set the stop_event to stop the animation thread
+    # Shutdown the ThreadPoolExecutor if it's running
+    if 'executor' in globals():
+        executor.shutdown(wait=False)  # Do not wait for pending tasks
+    # Delete the output file if it exists
+    if 'output_path' in globals() and output_path.exists():
         output_path.unlink()
     sys.exit(1)
 
