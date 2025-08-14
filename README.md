@@ -22,6 +22,68 @@ and input the file size.
 - **User-Friendly**: Provides clear prompts, human-readable outputs, and a help command.
 - **Windows**: Created both scripts as windows executables.
 - **Results and such**: Will be saved to \Users\username\icebrkr_data and for linux home/username/icebrkr_data
+Here's the updated README section focusing only on the new changes (single-file search capability):
+
+### Summary of Key Features:
+- **Single-File Search**: Added `--single-file` option to search within a specific file instead of directories.
+- **Combined Search Modes**: Supports using both `--file` (search terms file) and `--single-file` (target file) together.
+- **can also just point to a single file.**
+- **Flexible Arguments**: Can now accept search terms either from command line or file when using single-file mode.
+
+### How to run under windows in the exeutable:
+
+open cmd and type for example:
+
+    ./icebrkr.exe --single-file target_file.txt "search_term"
+    ./icebrkr.exe --single-file target_file.txt --file search_terms.txt
+    ./icebrkr.exe target_file.txt
+
+### Here's the detailed discussion of the new changes:
+
+---
+
+### 1. **Single-File Search Mode**:
+   - **What Changed**:
+     - Added `--single-file` option to specify a single file to search through.
+     - Works with both command-line search terms and `--file` for search terms.
+   - **Why It's Useful**:
+     - Allows focused searching within large individual files.
+     - More efficient than directory scanning when you know the exact file to search.
+   - **Example**:
+     ```
+     ./icebrkr.exe --single-file large_dump.txt "john.doe@example.com"
+     ```
+
+---
+
+### 2. **Combined File and Single-File Mode**:
+   - **What Changed**:
+     - Can now use `--file` (search terms file) with `--single-file` (target file).
+   - **Why It's Useful**:
+     - Search a specific file with multiple terms from a text file.
+     - Better organization for complex searches.
+   - **Example**:
+     ```
+     ./icebrkr.exe --single-file database.txt --file emails_to_find.txt
+     ```
+
+---
+
+### 3. **Improved Cache Handling for Single-File**:
+   - **What Changed**:
+     - Cache key now incorporates both search terms and target file path.
+   - **Why It's Useful**:
+     - Prevents cache collisions between different file searches.
+     - Maintains cache integrity when switching between single-file and directory modes.
+
+---
+
+### 4. **Simplified Single-File Workflow**:
+   - **What Changed**:
+     - Automatically skips directory-related prompts when in single-file mode.
+   - **Why It's Useful**:
+     - Streamlines the search process for single-file operations.
+     - Reduces unnecessary user input.
 
 ---
 
