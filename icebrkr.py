@@ -12,13 +12,9 @@ import signal
 # Function to clean up and exit
 def cleanup(signum, frame):
     print("\nInterrupt received, stopping all processes...")
-    # Signal to stop the animation
-    if 'stop_event' in globals():
-        stop_event.set()  # Set the stop_event to stop the animation thread
-    # Shutdown the ThreadPoolExecutor if it's running
+    stop_event.set()  # notify all threads
     if 'executor' in globals():
-        executor.shutdown(wait=False)  # Do not wait for pending tasks
-    # Delete the output file if it exists
+        executor.shutdown(wait=False, cancel_futures=True)
     if 'output_path' in globals() and output_path.exists():
         output_path.unlink()
     sys.exit(1)
@@ -35,20 +31,26 @@ def usage():
     print(f"Example 4: {sys.argv[0]} --file search_terms.txt /path/to/your/data/")
     print(f"Example 5: {sys.argv[0]} --single-file large_file.txt 'Fiona' 'outlook.com'")
     print(f"Example 6: {sys.argv[0]} --single-file large_file.txt --file search_terms.txt")
+    print(f"Example 7: {sys.argv[0]} large_file.txt")
     sys.exit(1)
 
 # Function to search for text in files and return matching lines
 def search_file(file_path, search_terms):
+    if stop_event.is_set():  # bail out if stopping
+        return None, []
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
             matching_lines = []
             for line in file:
+                if stop_event.is_set():  # check mid-file read
+                    return None, []
                 if all(term.lower() in line.lower() for term in search_terms):
                     matching_lines.append(line.strip())
             if matching_lines:
                 return file_path, matching_lines
     except Exception as e:
-        print(f"Error reading {file_path}: {e}")
+        if not stop_event.is_set():
+            print(f"Error reading {file_path}: {e}")
     return None, []
 
 # Function to index files (updated to avoid duplicates)
@@ -333,19 +335,20 @@ if __name__ == "__main__":
             # Directory search mode
             # Use ThreadPoolExecutor for parallel processing
             with concurrent.futures.ThreadPoolExecutor() as executor:
+                globals()['executor'] = executor  # so cleanup() can access it
                 futures = []
                 for directory in directories:
-                    # Index the files
                     index_directory(directory, index_file)
-
-                    # Search files in the directory
                     for root, _, files in os.walk(directory):
                         for file in files:
+                            if stop_event.is_set():
+                                break
                             file_path = Path(root) / file
                             futures.append(executor.submit(search_file, file_path, search_terms))
 
-                # Collect results as they complete
                 for future in concurrent.futures.as_completed(futures):
+                    if stop_event.is_set():
+                        break
                     file_path, matching_lines = future.result()
                     if matching_lines:
                         matching_results.append((file_path, matching_lines))
