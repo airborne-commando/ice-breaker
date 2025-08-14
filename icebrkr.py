@@ -31,7 +31,7 @@ def usage():
     print(f"Example 4: {sys.argv[0]} --file search_terms.txt /path/to/your/data/")
     print(f"Example 5: {sys.argv[0]} --single-file large_file.txt 'Fiona' 'outlook.com'")
     print(f"Example 6: {sys.argv[0]} --single-file large_file.txt --file search_terms.txt")
-    print(f"Example 7: {sys.argv[0]} large_file.txt")
+    print(f"Example 7: {sys.argv[0]} 'gmail' large_file.txt")
     sys.exit(1)
 
 # Function to search for text in files and return matching lines
