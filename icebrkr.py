@@ -25,13 +25,16 @@ def cleanup(signum, frame):
 
 # Function to display usage
 def usage():
-    print(f"Usage: {sys.argv[0]} [Optional: first name] [Optional: full name] [Optional: email domain] [Optional: search directories...]")
+    print(f"Usage: {sys.argv[0]} [Optional: first name] [Optional: full name] [Optional: email domain] [Optional: search directories or file...]")
     print(f"       {sys.argv[0]} /? (Display help)")
-    print(f"       {sys.argv[0]} --file <search_terms_file> [Optional: search directories...]")
+    print(f"       {sys.argv[0]} --file <search_terms_file> [Optional: search directories or file...]")
+    print(f"       {sys.argv[0]} --single-file <file_to_search> [Optional: search terms or --file <search_terms_file>]")
     print(f"Example 1: {sys.argv[0]} 'Fiona' 'Fiona Scott' 'outlook.com' /path/to/your/data/")
     print(f"Example 2: {sys.argv[0]} 'Fiona' /path/to/your/data/")
     print(f"Example 3: {sys.argv[0]} 'outlook' /path/to/your/data/")
     print(f"Example 4: {sys.argv[0]} --file search_terms.txt /path/to/your/data/")
+    print(f"Example 5: {sys.argv[0]} --single-file large_file.txt 'Fiona' 'outlook.com'")
+    print(f"Example 6: {sys.argv[0]} --single-file large_file.txt --file search_terms.txt")
     sys.exit(1)
 
 # Function to search for text in files and return matching lines
@@ -172,32 +175,58 @@ if __name__ == "__main__":
     directories = []
     search_terms = []
     use_tlds = True  # Default to asking about TLDs
+    single_file_mode = False
+    file_to_search = None
 
-    # Check if search terms are provided via a file
+    # Check if we're in single file mode
+    if "--single-file" in sys.argv:
+        try:
+            file_index = sys.argv.index("--single-file")
+            file_to_search = sys.argv[file_index + 1]
+            if not os.path.isfile(file_to_search):
+                print(f"Error: File {file_to_search} does not exist or is not a file.")
+                sys.exit(1)
+            single_file_mode = True
+        except IndexError:
+            print("Error: No file specified after --single-file")
+            usage()
+
+    # Check for search terms file (can be used with or without --single-file)
     if "--file" in sys.argv:
         try:
             file_index = sys.argv.index("--file")
             search_terms_file = sys.argv[file_index + 1]
             search_terms = read_search_terms_from_file(search_terms_file)
-            directories = sys.argv[file_index + 2:]
             use_tlds = False  # Skip TLD prompt if using a file
+            
+            # If not in single file mode, get directories from remaining args
+            if not single_file_mode:
+                directories = sys.argv[file_index + 2:]
         except IndexError:
             print("Error: No search terms file provided.")
             usage()
     else:
-        # Parse arguments
-        for arg in sys.argv[1:]:
+        # Parse arguments (only if we're not using --file)
+        remaining_args = sys.argv[1:]
+        if single_file_mode:
+            # Skip the --single-file and file path arguments
+            remaining_args = sys.argv[sys.argv.index("--single-file") + 2:]
+        
+        for arg in remaining_args:
             if " " in arg:  # Full name
                 full_name = arg
             elif "@" in arg:  # Email domain
                 email_domain = arg
             elif os.path.isdir(arg):  # Directory
                 directories.append(arg)
-            else:  # First name
+            elif os.path.isfile(arg) and not single_file_mode:  # Single file (if not already in single file mode)
+                file_to_search = arg
+                single_file_mode = True
+            else:  # First name or other search term
                 first_name = arg
 
         # If no arguments are provided, default to help
-        if not first_name and not full_name and not email_domain and not directories:
+        if not first_name and not full_name and not email_domain and not directories and not single_file_mode:
             usage()
 
         # Build search terms
@@ -208,8 +237,14 @@ if __name__ == "__main__":
         if email_domain:
             search_terms.append(email_domain)
 
-    # If no directories are provided, use the current directory
-    if not directories:
+    # If in single file mode and no search terms were provided via arguments or --file, prompt for them
+    if single_file_mode and not search_terms:
+        search_input = input("Enter search terms separated by spaces: ").strip()
+        if search_input:
+            search_terms = search_input.split()
+
+    # If no directories are provided and not in single file mode, use the current directory
+    if not directories and not single_file_mode:
         directories = ["."]
 
     # Check if the directories exist
@@ -218,9 +253,9 @@ if __name__ == "__main__":
             print(f"Error: Directory {directory} does not exist.")
             sys.exit(1)
 
-    # Ask the user if they want to search for specific TLDs (unless using a file)
+    # Ask the user if they want to search for specific TLDs (unless using a file or in single file mode)
     tlds = []
-    if use_tlds:
+    if use_tlds and not single_file_mode:
         while True:
             tld_prompt = input("Do you want to search for specific TLDs (e.g., .gov, .edu, .mil)? (y/n): ").strip().lower()
             if tld_prompt in ["y", "n"]:
@@ -250,8 +285,11 @@ if __name__ == "__main__":
     output_path = text_dir / "output.txt"
     index_file = index_dir / "index.txt"
 
-    # Generate cache key based on search terms
-    cache_key = hashlib.md5("_".join(search_terms).encode()).hexdigest()
+    # Generate cache key based on search terms and file path (if in single file mode)
+    if single_file_mode:
+        cache_key = hashlib.md5(("_".join(search_terms) + file_to_search).encode()).hexdigest()
+    else:
+        cache_key = hashlib.md5("_".join(search_terms).encode()).hexdigest()
     cache_file = cache_dir / f"{cache_key}.cache"
 
     # Set TTL (Time to Live) for cache (default: 1 hour = 3600 seconds)
@@ -286,24 +324,31 @@ if __name__ == "__main__":
 
         matching_results = []
 
-        # Use ThreadPoolExecutor for parallel processing
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = []
-            for directory in directories:
-                # Index the files
-                index_directory(directory, index_file)
+        if single_file_mode:
+            # Single file search mode
+            file_path, matching_lines = search_file(file_to_search, search_terms)
+            if matching_lines:
+                matching_results.append((file_path, matching_lines))
+        else:
+            # Directory search mode
+            # Use ThreadPoolExecutor for parallel processing
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = []
+                for directory in directories:
+                    # Index the files
+                    index_directory(directory, index_file)
 
-                # Search files in the directory
-                for root, _, files in os.walk(directory):
-                    for file in files:
-                        file_path = Path(root) / file
-                        futures.append(executor.submit(search_file, file_path, search_terms))
+                    # Search files in the directory
+                    for root, _, files in os.walk(directory):
+                        for file in files:
+                            file_path = Path(root) / file
+                            futures.append(executor.submit(search_file, file_path, search_terms))
 
-            # Collect results as they complete
-            for future in concurrent.futures.as_completed(futures):
-                file_path, matching_lines = future.result()
-                if matching_lines:
-                    matching_results.append((file_path, matching_lines))
+                # Collect results as they complete
+                for future in concurrent.futures.as_completed(futures):
+                    file_path, matching_lines = future.result()
+                    if matching_lines:
+                        matching_results.append((file_path, matching_lines))
 
         # Stop the animation
         stop_event.set()
@@ -323,7 +368,8 @@ if __name__ == "__main__":
         shutil.copy(output_path, cache_file)
         print(f"Search results saved to {output_path}")
         print(f"Results cached in {cache_file}")
-        print(f"Index saved to {index_file}")
+        if not single_file_mode:
+            print(f"Index saved to {index_file}")
 
     # Print the results from the output file
     print("\nSearch Results:")
