@@ -32,7 +32,11 @@ def usage():
     print(f"Example 5: {sys.argv[0]} --single-file large_file.txt 'Fiona' 'outlook.com'")
     print(f"Example 6: {sys.argv[0]} --single-file large_file.txt --file search_terms.txt")
     print(f"Example 7: {sys.argv[0]} 'gmail' large_file.txt")
+    print(f"Example 8: {sys.argv[0]} 'target@example.com' breach/*.txt")
+    print(f"Example 9: {sys.argv[0]} 'target@example.com' breach/*.txt breach/*.csv")
+    print(f"       (Wildcards are recursive: breach/*.txt searches all .txt files in breach/ and subfolders)")
     sys.exit(1)
+
 
 # Function to search for text in files and return matching lines
 def search_file(file_path, search_terms):
@@ -337,21 +341,26 @@ if __name__ == "__main__":
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 globals()['executor'] = executor  # so cleanup() can access it
                 futures = []
-                for directory in directories:
-                    index_directory(directory, index_file)
-                    for root, _, files in os.walk(directory):
-                        for file in files:
-                            if stop_event.is_set():
-                                break
-                            file_path = Path(root) / file
-                            futures.append(executor.submit(search_file, file_path, search_terms))
+        for directory in directories:
+            index_directory(directory, index_file)
 
-                for future in concurrent.futures.as_completed(futures):
+            path_obj = Path(directory)
+            # Check if wildcard pattern provided
+            if "*" in directory or "?" in directory:
+                # If the parent directory exists, use it; otherwise default to current dir
+                base_dir = path_obj.parent if path_obj.parent.exists() else Path(".")
+                pattern_str = path_obj.name
+                for file_path in base_dir.rglob(pattern_str):  # Recursive wildcard search
                     if stop_event.is_set():
                         break
-                    file_path, matching_lines = future.result()
-                    if matching_lines:
-                        matching_results.append((file_path, matching_lines))
+                    futures.append(executor.submit(search_file, file_path, search_terms))
+            else:
+                # Original behavior: search all files recursively
+                for file_path in Path(directory).rglob("*"):
+                    if stop_event.is_set():
+                        break
+                    if file_path.is_file():
+                        futures.append(executor.submit(search_file, file_path, search_terms))
 
         # Stop the animation
         stop_event.set()
